@@ -18,8 +18,12 @@ gem "stimulus-rails"
 gem "tailwindcss-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
-# Use Redis adapter to run Action Cable in production
-# gem "redis", ">= 4.0.1"
+# Redis client, used by the Action Cable adapter
+gem "redis", ">= 4.0.1"
+
+# Background jobs (Redis-backed) and scheduled jobs
+gem "sidekiq", ">= 8.1"
+gem "sidekiq-cron", ">= 2.4"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
@@ -51,9 +55,21 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  gem "rspec-rails", ">= 8.1"
+  gem "factory_bot_rails", ">= 6.5"
 end
 
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+
+  # Loads .env, so commands run outside foreman see the same settings.
+  # Not loaded in test: specs must run without an API key.
+  gem "dotenv", ">= 3.2"
+end
+
+group :test do
+  gem "webmock", ">= 3.41"
+  gem "vcr", ">= 6.4"
 end
