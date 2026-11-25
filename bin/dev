@@ -5,6 +5,13 @@ if ! gem list foreman -i --silent; then
   gem install foreman
 fi
 
+# Postgres 16 and Redis come from docker compose. Rails, Tailwind and Sidekiq run on the host.
+if ! docker compose up -d --wait postgres redis; then
+  echo "Could not start postgres and redis. Is Docker running?" >&2
+  exit 1
+fi
+bin/rails db:prepare || exit 1
+
 # Default to port 3000 if not specified
 export PORT="${PORT:-3000}"
 
