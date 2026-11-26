@@ -1,0 +1,38 @@
+<% by_year = months.group_by { _1.month.year } %>
+<section class="rounded-lg border border-gray-200 bg-white p-4">
+  <h2 class="text-lg font-semibold">Monthly returns</h2>
+  <p class="mb-3 mt-1 text-xs text-gray-500">
+    Each month's net profit ÷ (balance when it starts + deposits during it). Months follow the broker server's closing times.
+    Blue is a gain, red a loss. Hover a month for its profit and trade count.
+  </p>
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[40rem] table-fixed border-separate border-spacing-0.5 text-center text-sm tabular-nums">
+      <thead class="text-gray-600">
+        <tr>
+          <th scope="col" class="w-14 text-left font-medium">Year</th>
+          <% Date::ABBR_MONTHNAMES.compact.each do |name| %>
+            <th scope="col" class="font-medium"><%= name %></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% by_year.each do |year, list| %>
+          <% cells = list.index_by { _1.month.month } %>
+          <tr>
+            <th scope="row" class="text-left font-medium"><%= year %></th>
+            <% (1..12).each do |number| %>
+              <% if (month = cells[number]) %>
+                <td class="rounded py-2 <%= heat_class(month.return_rate) %>"
+                    title="<%= month.month.strftime("%B %Y") %>: <%= money(month.net_profit, @account.currency) %> from <%= pluralize(month.trades, "trade") %>">
+                  <%= percent(month.return_rate) %>
+                </td>
+              <% else %>
+                <td></td>
+              <% end %>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>

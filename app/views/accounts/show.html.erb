@@ -1,23 +1,41 @@
 <% content_for :title, @account.name %>
-<h1 class="text-3xl font-bold"><%= @account.name %></h1>
+<div class="flex flex-wrap items-baseline gap-x-3">
+  <h1 class="text-3xl font-bold"><%= @account.name %></h1>
+  <% if @account.demo? %>
+    <span class="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Synthetic demo data</span>
+  <% end %>
+</div>
 <p class="mb-6 mt-1 text-gray-600">
   <%= @account.broker %> · <%= @account.server %> · account <%= @account.masked_login %>
-  <% if @account.demo? %> · synthetic demo data<% end %>
 </p>
 
-<dl class="grid grid-cols-2 gap-4 md:grid-cols-4">
-  <% {
-       "Initial balance" => number_to_currency(@account.initial_balance, unit: "#{@account.currency} "),
-       "Closed trades" => number_with_delimiter(@account.trades.count),
-       "Robots" => @account.robots.count,
-       "Net profit of closed trades" => number_to_currency(@account.trades.sum(:net_profit), unit: "#{@account.currency} ")
-     }.each do |label, value| %>
-    <div class="rounded-lg border border-gray-200 bg-white p-4">
-      <dt class="text-sm text-gray-600"><%= label %></dt>
-      <dd class="mt-1 text-xl font-semibold"><%= value %></dd>
-    </div>
+<% first_day, last_day = @account.trades.pick(Arel.sql("MIN(closed_at)"), Arel.sql("MAX(closed_at)"))&.map { _1&.to_date } %>
+
+<% if last_day.nil? %>
+  <p class="text-gray-600">This account has no closed trades yet.</p>
+<% else %>
+  <%= turbo_frame_tag "dashboard", data: { turbo_action: "advance" }, class: "block space-y-6 aria-busy:opacity-60" do %>
+    <%= render "accounts/dashboard/filters", first_day:, last_day: %>
+
+    <% if @dashboard.summary.trades.zero? %>
+      <p class="rounded-lg border border-gray-200 bg-white p-8 text-center text-gray-600">No closed trades match these filters.</p>
+    <% else %>
+      <%= render "accounts/dashboard/summary", summary: @dashboard.summary, curve: @dashboard.curve %>
+      <%= render "accounts/dashboard/charts", curve: @dashboard.curve, subset: @filter.symbol || @filter.robot_id %>
+      <%= render "accounts/dashboard/months", months: @dashboard.months %>
+      <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <%= render "accounts/dashboard/breakdown", title: "By symbol", label: "Symbol", rows: @dashboard.symbols %>
+        <%= render "accounts/dashboard/breakdown", title: "By robot", label: "Robot", rows: @dashboard.robots %>
+      </div>
+      <section class="rounded-lg border border-gray-200 bg-white p-4">
+        <h2 class="mb-3 text-lg font-semibold">Trades</h2>
+        <%= turbo_frame_tag "trades", src: account_trades_path(@account, **@filter.to_params), loading: :lazy do %>
+          <p class="py-6 text-center text-sm text-gray-600">Loading trades…</p>
+        <% end %>
+      </section>
+    <% end %>
   <% end %>
-</dl>
+<% end %>
 
 <% if @imports.any? %>
   <h2 class="mb-3 mt-10 text-xl font-semibold">Imports</h2>

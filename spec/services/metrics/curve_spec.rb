@@ -17,6 +17,16 @@ RSpec.describe Metrics::Curve do
     expect(curve.points.map { [ _1.balance, _1.equity, _1.drawdown ] })
       .to eq([ [ 1000, 1000, 0 ], [ 1200, 1200, 0 ], [ 900, 900, 300 ] ])
     expect(curve).to have_attributes(max_drawdown: 300, max_drawdown_rate: 0.25)
+    expect(curve.points.map(&:drawdown_rate)).to all(be_a(Float))
+  end
+
+  it "thins to one point a day without losing the day's deepest drawdown" do
+    closed(account, "2026-03-03 15:00", 250)
+
+    day = curve.daily.last
+
+    expect(curve.daily.size).to eq(3)
+    expect(day).to have_attributes(balance: 1150, drawdown: 300, drawdown_rate: 0.25)
   end
 
   it "does not take a deposit during a drawdown for a recovery" do

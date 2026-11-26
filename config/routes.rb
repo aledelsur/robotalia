@@ -3,7 +3,9 @@ require "sidekiq/cron/web"
 
 Rails.application.routes.draw do
   resource :session, only: %i[new create destroy]
-  resources :accounts, only: %i[index show]
+  resources :accounts, only: %i[index show] do
+    resources :trades, only: :index
+  end
   resources :account_imports, path: "imports", only: %i[new create show]
 
   # Sidekiq's dashboard is only routable for the signed-in owner; anyone else gets a 404.

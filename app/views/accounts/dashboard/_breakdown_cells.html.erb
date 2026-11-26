@@ -1,0 +1,7 @@
+<span class="truncate">
+  <% if expandable %><span aria-hidden="true" class="mr-1 inline-block text-gray-400 in-open:rotate-90">▸</span><% end %><%= row.name %>
+</span>
+<span class="text-right"><%= number_with_delimiter(row.tally.trades) %></span>
+<span class="text-right"><%= percent(row.tally.win_rate) %></span>
+<span class="text-right"><%= ratio(row.tally.profit_factor) %></span>
+<span class="text-right <%= profit_class(row.tally.net_profit) %>"><%= money(row.tally.net_profit, @account.currency) %></span>

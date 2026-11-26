@@ -74,4 +74,8 @@ group :test do
   gem "vcr", ">= 6.4"
 end
 
+# Reads the MT5 .xlsx report
 gem "roo", ">= 4.0"
+
+# Pagination
+gem "pagy", "~> 43.8"

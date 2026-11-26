@@ -1,0 +1,51 @@
+<section class="rounded-lg border border-gray-200 bg-white p-4"
+         data-controller="equity-chart"
+         data-equity-chart-points-value="<%= curve_chart_data(curve).to_json %>"
+         data-equity-chart-currency-value="<%= @account.currency %>">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <h2 class="text-lg font-semibold">Equity and balance</h2>
+    <ul class="flex gap-4 text-sm text-gray-600">
+      <li class="flex items-center gap-2"><span class="h-0.5 w-4 bg-[#257de0]" aria-hidden="true"></span>Equity</li>
+      <li class="flex items-center gap-2"><span class="h-0.5 w-4 bg-[#f47230]" aria-hidden="true"></span>Balance</li>
+    </ul>
+  </div>
+  <p class="mb-3 mt-1 text-xs text-gray-500">
+    Balance includes deposits and withdrawals. Equity is starting capital plus closed-trade profit, so cash flows don't move it.
+    Open positions are not valued, because the report has no price history.
+    <% if subset %>With a symbol or robot filter, both lines show the account's capital with only the matching trades.<% end %>
+  </p>
+  <div class="relative h-72">
+    <canvas data-equity-chart-target="equity" role="img" aria-label="Line chart of equity and balance by day. The table below lists month-end values."></canvas>
+  </div>
+
+  <h3 class="mb-2 mt-6 text-sm font-semibold">Drawdown from peak</h3>
+  <div class="relative h-36">
+    <canvas data-equity-chart-target="drawdown" role="img" aria-label="Chart of the deepest drawdown of each day. The table below lists the worst of each month."></canvas>
+  </div>
+
+  <details class="mt-4 text-sm">
+    <summary class="cursor-pointer text-blue-600">Show as a table</summary>
+    <div class="mt-2 overflow-x-auto">
+      <table class="w-full tabular-nums">
+        <thead class="text-gray-600">
+          <tr class="border-b border-gray-200">
+            <th scope="col" class="py-1 text-left font-medium">Month</th>
+            <th scope="col" class="py-1 text-right font-medium">Closing equity</th>
+            <th scope="col" class="py-1 text-right font-medium">Closing balance</th>
+            <th scope="col" class="py-1 text-right font-medium">Worst drawdown</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% curve_months(curve).each do |month, last, worst| %>
+            <tr class="border-b border-gray-100">
+              <th scope="row" class="py-1 text-left font-normal"><%= month.strftime("%b %Y") %></th>
+              <td class="py-1 text-right"><%= money(last.equity, @account.currency) %></td>
+              <td class="py-1 text-right"><%= money(last.balance, @account.currency) %></td>
+              <td class="py-1 text-right"><%= percent(worst, precision: 2) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </details>
+</section>

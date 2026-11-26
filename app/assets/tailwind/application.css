@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+/* Pagy's page links (trades table). */
+.pagy {
+  @apply flex flex-wrap gap-1;
+
+  a {
+    @apply rounded-md border border-gray-300 px-2.5 py-1 text-gray-700;
+  }
+
+  a[href]:hover {
+    @apply border-blue-400;
+  }
+
+  a[aria-current="page"] {
+    @apply border-blue-600 bg-blue-600 text-white;
+  }
+
+  a[aria-disabled="true"]:not([aria-current]) {
+    @apply text-gray-400;
+  }
+}

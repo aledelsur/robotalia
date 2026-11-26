@@ -12,7 +12,16 @@ module Metrics
   # its first trade (such as the opening deposit).
   class Curve
     Point = Data.define(:time, :balance, :equity, :drawdown, :drawdown_rate)
-    Result = Data.define(:points, :max_drawdown, :max_drawdown_rate)
+    Result = Data.define(:points, :max_drawdown, :max_drawdown_rate) do
+      # One point per day for charts: where the day closed, with its deepest drawdown, so
+      # that thinning the points never hides the worst moment.
+      def daily
+        points.chunk { _1.time.to_date }.map do |_, day|
+          worst = day.max_by { _1.drawdown_rate || 0 }
+          day.last.with(drawdown: worst.drawdown, drawdown_rate: worst.drawdown_rate)
+        end
+      end
+    end
 
     def initialize(filter)
       @filter = filter
@@ -57,7 +66,7 @@ module Metrics
 
       def point(time, balance, equity, peak)
         drawdown = peak - balance
-        rate = drawdown.fdiv(peak) if peak.positive?
+        rate = drawdown.to_f / peak.to_f if peak.positive?
         Point.new(time:, balance:, equity:, drawdown:, drawdown_rate: rate)
       end
   end
