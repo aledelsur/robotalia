@@ -73,3 +73,5 @@ group :test do
   gem "webmock", ">= 3.41"
   gem "vcr", ">= 6.4"
 end
+
+gem "roo", ">= 4.0"
