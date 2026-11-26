@@ -13,16 +13,16 @@ synthetic demo account) and Day 2 (deploy, metrics, dashboard).
 Each step ends with green tests and a commit. Prefer a smaller, polished, working scope over
 unfinished features. If a day's work runs late, cut scope, not quality.
 
-## Production and the public demo
+## Production
 - Production holds only the synthetic demo account. Real reports and trades stay on the owner's machine.
-- Visitors sign in as a demo user, which is read-only: imports are disabled.
-- Claude calls are capped per day, because demo visitors trigger paid requests.
+- Report imports are disabled in production.
+- Claude calls are capped per day, to limit what paid requests can cost.
 
 ## Data source
 - Day 1-4: import trade history from a MetaTrader 5 account report (exported by the owner from
   the MT5 terminal, History tab -> Report). Support the formats MT5 actually produces (check the
   real file: HTML and/or XLSX). Imports are idempotent (dedupe by deal/position ticket).
-- A synthetic demo account (seeds) so the public demo never shows real data.
+- A synthetic demo account (seeds) so the deployed demo never shows real data.
 
 ## Day 1: Foundation and import
 1. Finish single-owner authentication from the stash; Sidekiq web UI behind sign-in. Users get a
@@ -88,12 +88,24 @@ Notes from Day 2:
    structure and that every number it quotes was in its input.
 
 ## Day 4: Ship
-1. Redeploy to the VPS. Demo login with the synthetic account: read-only, imports disabled.
+1. Redeploy to the VPS.
 2. GitHub repo (public): README with problem, screenshots/GIF, architecture diagram, how Claude is
    used, how to run locally, test/CI badges. CI green on GitHub Actions.
 3. Final check: fresh `docker compose up --build`, seeds, sign in, import a sample report, dashboard,
    AI summary, chat. The local check uses the synthetic sample report.
 4. Optional, if time is left: Avo resources (free tier).
+
+## Integrations
+Not started and not yet assigned to a day. The privacy rules in CLAUDE.md apply to all of them:
+tokens and other secrets stay out of the repo, and no real account data goes to an outside service.
+
+1. GitHub PR workflow and Claude GitHub Actions: changes go through pull requests with CI, and
+   Claude works on them through GitHub Actions.
+2. MCP servers for development: Trello, GitHub and Sentry.
+3. Sentry monitoring: error monitoring for the web app and Sidekiq jobs.
+4. Claude Code hooks for this project.
+5. A UI designed in Figma and implemented through the Figma MCP server.
+6. Stretch: a Robotalia MCP server.
 
 ## Later
 - Live, read-only account sync behind an `AccountSync` adapter interface (MT5 report import is the
@@ -101,7 +113,7 @@ Notes from Day 2:
   Encryption, never code or logs. Verify the real API responses before writing a parser.
 - Settings optimizer for Pine Script strategies on exported TradingView data, with a broker
   emulator matching TradingView's Strategy Tester and walk-forward validation.
-- Drawdown watchdog with alerts; weekly AI report email; MCP server.
+- Drawdown watchdog with alerts; weekly AI report email.
 
 ## Architecture (target)
 MT5 report (manual export) -> Upload -> Rails 8.1 -> Sidekiq import job -> PostgreSQL
