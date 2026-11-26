@@ -40,3 +40,6 @@
 
 # Personal Claude Code settings.
 /.claude/settings.local.json
+
+# Real account reports. This repo is public: never commit them.
+/private/
