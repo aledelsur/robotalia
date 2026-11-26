@@ -43,18 +43,30 @@ Notes from Day 1:
   no real report with a partial close has been checked.
 - Times are broker server time, stored as written.
 
-## Day 2: Performance dashboard
-1. `Metrics` service objects (pure Ruby, fully tested). Decide how break-even trades count: MT5
-   counts them as winners in its win rate. Metrics: net profit, return %, win rate, profit
+## Day 2: Deploy, then the performance dashboard
+Done:
+1. Server setup (`script/server/setup.sh`: updates, SSH keys only, Docker, firewall, swap) and a
+   bare Kamal 2 deploy (web, Sidekiq, PostgreSQL, Redis, SSL). https://robotalia.app is live with
+   the synthetic demo account, so each later step only needs `bin/kamal deploy`. Server address,
+   hostname and database password come from `.env.deploy` (see `.env.deploy.example`). Report
+   imports are switched off in production (`IMPORTS_ENABLED`).
+
+Next:
+2. Group robots by model: drop the Long/Short token (any case, any position) from the comment and
+   group by what is left, so `M3_EURUSD_Long` and `M3_EURUSD_Short` are one robot,
+   "Model 3 · EURUSD". The long/short breakdown comes from the trade side. The demo keeps real,
+   common symbols (EURUSD, GBPUSD, XAUUSD, US30, NAS100) with invented trades and robot names.
+3. `Metrics` service objects (pure Ruby, fully tested): net profit, return %, win rate, profit
    factor, expectancy, average win/loss, max drawdown (amount and %), longest losing streak,
-   equity and balance curves, monthly returns.
-2. Dashboard page: KPI cards, equity curve with drawdown, monthly returns heatmap,
-   breakdown by symbol and by robot (comment/magic number), trades table with server-side
-   sorting, filters and pagination (Turbo Frames).
-3. Date-range and symbol filters that update the whole page without a full reload.
-4. Fast queries: proper indexes, measured with a seed of ~10K trades. Add cached metric snapshots
-   only if the measurement shows a slow page.
-5. End of day: bare Kamal 2 deploy (web, Sidekiq, PostgreSQL, Redis, SSL) with `/up` green.
+   equity and balance curves, monthly returns. A win is net profit > 0 (profit + commission +
+   swap); break-even trades are counted separately. MT5 counts them as winners, so the dashboard
+   also shows the MT5-style win rate and explains the difference.
+4. Dashboard page: KPI cards, equity curve with drawdown, monthly returns heatmap,
+   breakdown by symbol and by robot, trades table with server-side sorting, filters and
+   pagination (Turbo Frames).
+5. Date-range, symbol and robot filters that update the whole page without a full reload.
+6. Fast queries: proper indexes, measured with a seed of ~10K trades. Add cached metric snapshots
+   only if the measurement shows a slow page. Redeploy.
 
 ## Day 3: Claude features
 1. AiCall model and logging, the daily Claude-call cap, and the `/ai_usage` page (tokens, cost,
