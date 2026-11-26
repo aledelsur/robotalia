@@ -7,8 +7,8 @@ Goal: a polished Rails 8.1 app that showcases modern Rails and applied AI, built
 First product: an AI-powered performance dashboard for a trading account.
 
 Done: setup (Rails 8.1, PostgreSQL 16 + Redis via docker compose, Sidekiq, RSpec/WebMock/VCR,
-RuboCop/Brakeman, CI workflow, Dockerfiles) and Day 1 (sign-in, models, MT5 .xlsx import,
-synthetic demo account).
+RuboCop/Brakeman, CI workflow, Dockerfiles), Day 1 (sign-in, models, MT5 .xlsx import,
+synthetic demo account) and Day 2 (deploy, metrics, dashboard).
 
 Each step ends with green tests and a commit. Prefer a smaller, polished, working scope over
 unfinished features. If a day's work runs late, cut scope, not quality.
@@ -50,8 +50,6 @@ Done:
    the synthetic demo account, so each later step only needs `bin/kamal deploy`. Server address,
    hostname and database password come from `.env.deploy` (see `.env.deploy.example`). Report
    imports are switched off in production (`IMPORTS_ENABLED`).
-
-Next:
 2. Group robots by model: drop the Long/Short token (any case, any position) from the comment and
    group by what is left, so `M3_EURUSD_Long` and `M3_EURUSD_Short` are one robot,
    "Model 3 · EURUSD". The long/short breakdown comes from the trade side. The demo keeps real,
@@ -65,8 +63,17 @@ Next:
    breakdown by symbol and by robot, trades table with server-side sorting, filters and
    pagination (Turbo Frames).
 5. Date-range, symbol and robot filters that update the whole page without a full reload.
-6. Fast queries: proper indexes, measured with a seed of ~10K trades. Add cached metric snapshots
-   only if the measurement shows a slow page. Redeploy.
+6. Fast queries, measured with `bin/rails perf:dashboard` (a throwaway account of 10.6K trades):
+   the unfiltered dashboard takes about 220 ms on the development laptop and a filtered one about
+   35 ms. About half of the unfiltered time is Ruby building the equity curve. No new indexes or
+   cached snapshots are needed. Redeploy.
+
+Notes from Day 2:
+- Returns, for the whole range and for each month: net profit / (balance when the period starts +
+  deposits during it). With a symbol or robot filter the capital is still the whole account's.
+- Drawdown is measured from the balance peak, which deposits and withdrawals move by their own
+  amount. Max drawdown in money and in percent are each the largest, so they can be different dips.
+- Charts show one point per day (the day's close and its deepest drawdown).
 
 ## Day 3: Claude features
 1. AiCall model and logging, the daily Claude-call cap, and the `/ai_usage` page (tokens, cost,

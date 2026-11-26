@@ -56,6 +56,14 @@ RSpec.describe Demo::AccountGenerator do
     end
   end
 
+  it "can generate a longer history, starting with the opening deposit" do
+    report = described_class.new(period: Date.new(2025, 1, 1)..Date.new(2025, 12, 31)).report
+
+    expect(report.positions.size).to be > 1_000
+    expect(report.positions.map { _1.opened_at.year }.uniq).to eq([ 2025 ])
+    expect(report.balance_operations.first.executed_at).to eq(Time.utc(2025, 1, 1, 6))
+  end
+
   describe "#call" do
     it "creates the demo account, and changes nothing when run again" do
       account = described_class.new.call

@@ -6,10 +6,11 @@ module Demo
     LOGIN = "10000001"
     SERVER = "Robotalia-Synthetic"
     PERIOD = Date.new(2026, 5, 1)..Date.new(2026, 10, 30)
+    # [days after the period starts, amount, label]
     BALANCE_OPERATIONS = [
-      [ Date.new(2026, 5, 1), 10_000, "Deposit" ],
-      [ Date.new(2026, 7, 1), 2_000, "Deposit" ],
-      [ Date.new(2026, 9, 15), -1_500, "Withdrawal" ]
+      [ 0, 10_000, "Deposit" ],
+      [ 61, 2_000, "Deposit" ],
+      [ 137, -1_500, "Withdrawal" ]
     ].freeze
     # A stretch in which every robot does worse, so the account has a visible drawdown.
     ROUGH_PATCH = Date.new(2026, 8, 3)..Date.new(2026, 8, 28)
@@ -38,8 +39,10 @@ module Demo
       Strategy.new(comment: "M7_US30", symbols: %w[US30], frequency: 0.60, win_rate: 0.45, reward: 0.75)
     ].freeze
 
-    def initialize(seed: 2026)
+    # A longer period gives a bigger account, which the performance task uses.
+    def initialize(seed: 2026, period: PERIOD)
       @seed = seed
+      @period = period
     end
 
     def call
@@ -83,7 +86,7 @@ module Demo
         positions = []
         comments = {}
 
-        PERIOD.reject(&:on_weekend?).each do |day|
+        @period.reject(&:on_weekend?).each do |day|
           INSTRUMENTS.each { |symbol, instrument| prices[symbol] += gaussian * instrument.stop * 0.8 }
 
           entries = STRATEGIES.flat_map do |strategy|
@@ -138,7 +141,7 @@ module Demo
 
         day = opened_at.to_date + 1
         day += 1 while day.on_weekend?
-        return closed_at if day > PERIOD.last
+        return closed_at if day > @period.last
 
         Time.utc(day.year, day.month, day.day, 7) + @random.rand(8 * 3600)
       end
@@ -146,7 +149,10 @@ module Demo
       # The deals and balance operations behind the positions, ticketed in time order with a
       # running balance, as the Deals section of a report lists them.
       def ledger(positions, comments)
-        events = BALANCE_OPERATIONS.map { |day, amount, label| [ Time.utc(day.year, day.month, day.day, 6), :balance, amount, label ] }
+        events = BALANCE_OPERATIONS.map do |offset, amount, label|
+          day = @period.first + offset
+          [ Time.utc(day.year, day.month, day.day, 6), :balance, amount, label ]
+        end
         positions.each do |position|
           events << [ position.opened_at, :in, position, comments.fetch(position.position_id) ]
           events << [ position.closed_at, :out, position, nil ]
