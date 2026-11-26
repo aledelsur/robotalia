@@ -12,11 +12,15 @@ RSpec.describe Demo::AccountGenerator do
       expect(described_class.new.report).to eq(@report)
     end
 
-    it "covers about six months, five symbols and four robots" do
+    it "covers about six months of common symbols and four robots" do
       expect(positions.size).to be_between(550, 700)
       expect((positions.map(&:closed_at).max - positions.map(&:opened_at).min) / 1.day).to be_between(175, 186)
-      expect(positions.map(&:symbol).uniq.size).to eq(5)
-      expect(comments.values.uniq.size).to eq(4)
+      expect(positions.map(&:symbol).uniq).to match_array(%w[EURUSD GBPUSD XAUUSD US30 NAS100])
+      expect(comments.values.map { Robot.key_for(_1) }.uniq.size).to eq(4)
+    end
+
+    it "labels each entry with the direction it trades" do
+      expect(positions).to all(satisfy { comments[_1.position_id].end_with?(_1.side == "buy" ? "_Long" : "_Short") })
     end
 
     it "trades on weekdays only, and closes after it opens" do
@@ -38,7 +42,7 @@ RSpec.describe Demo::AccountGenerator do
         peak = [ peak, balance ].max
         (peak - balance) / peak
       end.max
-      by_robot = positions.group_by { comments[_1.position_id] }
+      by_robot = positions.group_by { Robot.key_for(comments[_1.position_id]) }
         .transform_values { |list| list.sum { _1.profit + _1.commission + _1.swap } }
 
       expect(nets.sum / 10_000).to be_between(0.05, 0.6)
@@ -65,11 +69,13 @@ RSpec.describe Demo::AccountGenerator do
 
     it "removes rows that are no longer generated" do
       account = described_class.new.call
-      stale = create(:trade, account:, position_id: 1)
+      robot = create(:robot, account:)
+      stale = create(:trade, account:, robot:, position_id: 1)
 
       described_class.new.call
 
       expect(Trade.exists?(stale.id)).to be(false)
+      expect(Robot.exists?(robot.id)).to be(false)
     end
 
     it "leaves real accounts alone" do

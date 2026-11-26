@@ -22,19 +22,20 @@ module Demo
     INSTRUMENTS = {
       "EURUSD" => Instrument.new(price: 1.0850, stop: 0.0022, digits: 5, contract: 100_000, commission: 7),
       "GBPUSD" => Instrument.new(price: 1.2700, stop: 0.0028, digits: 5, contract: 100_000, commission: 7),
-      "USDJPY" => Instrument.new(price: 152.00, stop: 0.18, digits: 3, contract: 650, commission: 7),
       "XAUUSD" => Instrument.new(price: 2900.0, stop: 6.5, digits: 2, contract: 100, commission: 7),
+      "US30" => Instrument.new(price: 42_000.0, stop: 110.0, digits: 2, contract: 1, commission: 0),
       "NAS100" => Instrument.new(price: 21_000.0, stop: 70.0, digits: 2, contract: 1, commission: 0)
     }.freeze
 
+    # Invented robots, commented the way a two-direction robot labels its trades.
     # frequency: chance of each of two daily entries. reward: typical win, in multiples of risk.
-    Strategy = Data.define(:name, :symbols, :frequency, :win_rate, :reward)
+    Strategy = Data.define(:comment, :symbols, :frequency, :win_rate, :reward)
     STRATEGIES = [
-      Strategy.new(name: "Aurora_Trend", symbols: %w[EURUSD GBPUSD], frequency: 0.55, win_rate: 0.40, reward: 1.65),
-      Strategy.new(name: "Tide_Reversion", symbols: %w[EURUSD GBPUSD USDJPY], frequency: 0.65, win_rate: 0.55, reward: 0.82),
-      Strategy.new(name: "Comet_Breakout", symbols: %w[XAUUSD NAS100], frequency: 0.50, win_rate: 0.35, reward: 1.85),
+      Strategy.new(comment: "M3_EURUSD", symbols: %w[EURUSD], frequency: 0.55, win_rate: 0.40, reward: 1.65),
+      Strategy.new(comment: "M4_GBPUSD", symbols: %w[GBPUSD], frequency: 0.65, win_rate: 0.55, reward: 0.82),
+      Strategy.new(comment: "M5", symbols: %w[XAUUSD NAS100], frequency: 0.50, win_rate: 0.35, reward: 1.85),
       # Deliberately a losing robot: something for the analysis to find.
-      Strategy.new(name: "Lantern_Scalper", symbols: %w[USDJPY], frequency: 0.60, win_rate: 0.45, reward: 0.75)
+      Strategy.new(comment: "M7_US30", symbols: %w[US30], frequency: 0.60, win_rate: 0.45, reward: 0.75)
     ].freeze
 
     def initialize(seed: 2026)
@@ -50,6 +51,7 @@ module Demo
         remove_stale_rows(account, data)
         result = Mt5Report::AccountWriter.new(account, data).call
         raise "Demo data is invalid: #{result.row_errors.first}" if result.row_errors.any?
+        account.robots.where.missing(:trades).delete_all
 
         account
       end
@@ -91,7 +93,7 @@ module Demo
           entries.sort_by(&:last).each do |strategy, opened_at|
             id = 700_000_000 + positions.size
             positions << position(id, strategy, opened_at, prices)
-            comments[id] = strategy.name
+            comments[id] = "#{strategy.comment}_#{positions.last.side == "buy" ? "Long" : "Short"}"
           end
         end
 

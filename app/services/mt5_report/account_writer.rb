@@ -72,7 +72,7 @@ module Mt5Report
         key = Robot.key_for(comment)
         return unless key
 
-        @robots[key] ||= Robot.create!(account: @account, key:, name: comment.strip)
+        @robots[key] ||= Robot.create!(account: @account, key:, name: Robot.name_for(comment))
       end
 
       # Returns :new, :updated or :skipped, or nil if the record is invalid.

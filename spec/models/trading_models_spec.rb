@@ -36,12 +36,26 @@ RSpec.describe "Trading models" do
   end
 
   describe Robot do
-    it "derives a key from the trade comment" do
-      expect(described_class.key_for("  Trend_Long ")).to eq("trend_long")
+    it "gives both directions of a robot the same key" do
+      comments = [ "  M3_EURUSD_Long ", "m3_eurusd_SHORT", "M3_Long_EURUSD", "short_M3_EURUSD", "M3 EURUSD long", "M3_EURUSD" ]
+
+      expect(comments.map { described_class.key_for(_1) }.uniq).to eq([ "m3_eurusd" ])
     end
 
-    it "ignores blank comments and MT5 stop or target comments" do
-      expect([ nil, "", "[sl 1.1000]", "[tp 1.2000]" ].map { described_class.key_for(_1) }).to all(be_nil)
+    it "drops only whole direction words" do
+      expect(described_class.key_for("Longhorn_Shortcut")).to eq("longhorn_shortcut")
+    end
+
+    it "names a robot after what is left" do
+      expect([ "M3_EURUSD_Long", "m5_Short", "Trend_Long" ].map { described_class.name_for(_1) })
+        .to eq([ "Model 3 · EURUSD", "Model 5", "TREND" ])
+    end
+
+    it "ignores comments that name no robot: blank, direction only, or an MT5 stop or target" do
+      comments = [ nil, "", "Long", "[sl 1.1000]", "[tp 1.2000]" ]
+
+      expect(comments.map { described_class.key_for(_1) }).to all(be_nil)
+      expect(comments.map { described_class.name_for(_1) }).to all(be_nil)
     end
   end
 

@@ -33,9 +33,9 @@ RSpec.describe Mt5Report::Importer do
   it "assigns each trade to the robot named by its entry deal" do
     account = import_report.account
 
-    expect(account.robots.pluck(:name)).to contain_exactly("Trend_Long", "Range_Short")
+    expect(account.robots.pluck(:name)).to contain_exactly("TREND", "RANGE")
     expect(account.trades.order(:position_id).map { _1.robot&.name })
-      .to eq([ "Trend_Long", "Range_Short", nil, "Trend_Long" ])
+      .to eq([ "TREND", "RANGE", nil, "TREND" ])
   end
 
   it "counts trades and balance operations, and records row errors" do
@@ -64,7 +64,7 @@ RSpec.describe Mt5Report::Importer do
 
   it "keeps a trade's robot and a renamed robot when a later report lacks the entry deal" do
     account = import_report.account
-    account.robots.find_by!(key: "trend_long").update!(name: "Trend follower")
+    account.robots.find_by!(key: "trend").update!(name: "Trend follower")
 
     import_report(deals: [])
 
