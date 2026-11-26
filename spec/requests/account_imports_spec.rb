@@ -61,6 +61,33 @@ RSpec.describe "Account imports" do
     expect(response).to have_http_status(:unprocessable_content)
   end
 
+  context "when imports are disabled, as on the public server" do
+    around do |example|
+      enabled = Rails.configuration.x.imports_enabled
+      Rails.configuration.x.imports_enabled = false
+      example.run
+    ensure
+      Rails.configuration.x.imports_enabled = enabled
+    end
+
+    it "refuses uploads, even from the owner" do
+      sign_in
+
+      expect { upload }.not_to change(AccountImport, :count)
+      expect(response).to redirect_to(root_path)
+      expect(flash[:alert]).to eq("Imports are disabled on this server.")
+      get new_account_import_path
+      expect(response).to redirect_to(root_path)
+    end
+
+    it "hides the import link" do
+      sign_in
+
+      get root_path
+      expect(response.body).not_to include("Import report")
+    end
+  end
+
   it "does not serve uploaded files" do
     expect(Rails.application.routes.routes.map { _1.path.spec.to_s }.grep(/active_storage/)).to be_empty
   end

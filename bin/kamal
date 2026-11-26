@@ -13,4 +13,8 @@ ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../Gemfile", __dir__)
 require "rubygems"
 require "bundler/setup"
 
+# Server address, hostname and database password for config/deploy.yml.
+require "dotenv"
+Dotenv.load(File.expand_path("../.env.deploy", __dir__))
+
 load Gem.bin_path("kamal", "kamal")

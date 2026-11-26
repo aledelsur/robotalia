@@ -41,6 +41,9 @@ module Robotalia
 
     config.active_job.queue_adapter = :sidekiq
 
+    # Off on the public server, which holds only the synthetic demo account.
+    config.x.imports_enabled = ENV.fetch("IMPORTS_ENABLED", "true") == "true"
+
     # Uploaded reports are only read by the import job, so nothing serves them over HTTP.
     config.active_storage.draw_routes = false
   end

@@ -1,6 +1,8 @@
 class AccountImportsController < ApplicationController
   include OwnerOnly
 
+  before_action :require_imports_enabled
+
   def new
     @account_import = AccountImport.new
   end
@@ -22,4 +24,9 @@ class AccountImportsController < ApplicationController
   def show
     @account_import = AccountImport.find(params[:id])
   end
+
+  private
+    def require_imports_enabled
+      redirect_to root_path, alert: "Imports are disabled on this server." unless Rails.configuration.x.imports_enabled
+    end
 end
