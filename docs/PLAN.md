@@ -6,9 +6,9 @@ Milestone: a deployed, demo-ready version within 4 days.
 Goal: a polished Rails 8.1 app that showcases modern Rails and applied AI, built with Claude Code.
 First product: an AI-powered performance dashboard for a trading account.
 
-Already done (setup): Rails 8.1 app, PostgreSQL 16 + Redis via docker compose, Sidekiq,
-RSpec/WebMock/VCR, RuboCop/Brakeman, CI workflow, Dockerfiles. Single-owner sign-in is
-half-built in `git stash` ("WIP step 4").
+Done: setup (Rails 8.1, PostgreSQL 16 + Redis via docker compose, Sidekiq, RSpec/WebMock/VCR,
+RuboCop/Brakeman, CI workflow, Dockerfiles) and Day 1 (sign-in, models, MT5 .xlsx import,
+synthetic demo account).
 
 Each step ends with green tests and a commit. Prefer a smaller, polished, working scope over
 unfinished features. If a day's work runs late, cut scope, not quality.
@@ -35,8 +35,17 @@ unfinished features. If a day's work runs late, cut scope, not quality.
    import status and summary (new, updated, skipped, errors) shown live with Turbo Streams.
 4. Idempotent seeds: a realistic synthetic demo account (several symbols and robots, ~6 months).
 
+Notes from Day 1:
+- Only the .xlsx report is supported. Add HTML only if needed.
+- Trades come from the report's Positions section: deals name their order, not their position.
+  The entry deal's comment names the robot. The report has no magic number.
+- Merging a position that is listed once per partial close is covered by a synthetic test only;
+  no real report with a partial close has been checked.
+- Times are broker server time, stored as written.
+
 ## Day 2: Performance dashboard
-1. `Metrics` service objects (pure Ruby, fully tested): net profit, return %, win rate, profit
+1. `Metrics` service objects (pure Ruby, fully tested). Decide how break-even trades count: MT5
+   counts them as winners in its win rate. Metrics: net profit, return %, win rate, profit
    factor, expectancy, average win/loss, max drawdown (amount and %), longest losing streak,
    equity and balance curves, monthly returns.
 2. Dashboard page: KPI cards, equity curve with drawdown, monthly returns heatmap,
