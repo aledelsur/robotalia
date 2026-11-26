@@ -40,5 +40,8 @@ module Robotalia
     config.generators.system_tests = nil
 
     config.active_job.queue_adapter = :sidekiq
+
+    # Uploaded reports are only read by the import job, so nothing serves them over HTTP.
+    config.active_storage.draw_routes = false
   end
 end

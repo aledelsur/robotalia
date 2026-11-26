@@ -1,0 +1,27 @@
+<% content_for :title, "Accounts" %>
+<h1 class="mb-6 text-3xl font-bold">Accounts</h1>
+
+<% if @accounts.empty? %>
+  <p class="text-gray-600">
+    No accounts yet.
+    <% if Current.user.owner? %>
+      <%= link_to "Import an MT5 report", new_account_import_path, class: "text-blue-600 underline" %> to create one.
+    <% end %>
+  </p>
+<% else %>
+  <ul class="grid gap-4 md:grid-cols-2">
+    <% @accounts.each do |account| %>
+      <li>
+        <%= link_to account, class: "block rounded-lg border border-gray-200 bg-white p-5 hover:border-blue-400" do %>
+          <span class="text-lg font-semibold"><%= account.name %></span>
+          <% if account.demo? %>
+            <span class="ml-2 rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Synthetic demo data</span>
+          <% end %>
+          <span class="mt-1 block text-sm text-gray-600">
+            <%= account.broker %> · <%= account.currency %> · <%= pluralize(account.trades.count, "closed trade") %>
+          </span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

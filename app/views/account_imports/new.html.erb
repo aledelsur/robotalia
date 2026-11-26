@@ -1,0 +1,21 @@
+<% content_for :title, "Import report" %>
+<h1 class="text-3xl font-bold">Import an MT5 report</h1>
+<p class="mt-2 max-w-2xl text-gray-600">
+  In the MetaTrader 5 terminal, open the History tab, right-click and choose Report, then Open XML (.xlsx),
+  with the terminal set to English. Importing the same history again is safe.
+</p>
+
+<%= form_with model: @account_import, class: "mt-6 max-w-xl space-y-4" do |form| %>
+  <% if @account_import.errors.any? %>
+    <p class="rounded-lg bg-red-50 px-3 py-2 font-medium text-red-700" role="alert">
+      <%= @account_import.errors.full_messages.to_sentence %>
+    </p>
+  <% end %>
+
+  <div>
+    <%= form.label :report, "Report file", class: "mb-1 block font-medium" %>
+    <%= form.file_field :report, accept: ".xlsx", required: true, class: "block w-full rounded-md border border-gray-300 bg-white p-2" %>
+  </div>
+
+  <%= form.submit "Import", class: "cursor-pointer rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-500" %>
+<% end %>

@@ -10,6 +10,11 @@ class Account < ApplicationRecord
   validates :currency, format: { with: /\A[A-Z]{3}\z/ }
   validates :initial_balance, numericality: true
 
+  # The demo user must never see a real account.
+  def self.visible_to(user)
+    user.demo? ? where(demo: true) : all
+  end
+
   def masked_login
     "••••#{login.last(4)}"
   end

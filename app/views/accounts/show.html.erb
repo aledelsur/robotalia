@@ -1,0 +1,33 @@
+<% content_for :title, @account.name %>
+<h1 class="text-3xl font-bold"><%= @account.name %></h1>
+<p class="mb-6 mt-1 text-gray-600">
+  <%= @account.broker %> · <%= @account.server %> · account <%= @account.masked_login %>
+  <% if @account.demo? %> · synthetic demo data<% end %>
+</p>
+
+<dl class="grid grid-cols-2 gap-4 md:grid-cols-4">
+  <% {
+       "Initial balance" => number_to_currency(@account.initial_balance, unit: "#{@account.currency} "),
+       "Closed trades" => number_with_delimiter(@account.trades.count),
+       "Robots" => @account.robots.count,
+       "Net profit of closed trades" => number_to_currency(@account.trades.sum(:net_profit), unit: "#{@account.currency} ")
+     }.each do |label, value| %>
+    <div class="rounded-lg border border-gray-200 bg-white p-4">
+      <dt class="text-sm text-gray-600"><%= label %></dt>
+      <dd class="mt-1 text-xl font-semibold"><%= value %></dd>
+    </div>
+  <% end %>
+</dl>
+
+<% if @imports.any? %>
+  <h2 class="mb-3 mt-10 text-xl font-semibold">Imports</h2>
+  <ul class="space-y-1 text-sm">
+    <% @imports.each do |import| %>
+      <li>
+        <%= link_to "#{l(import.created_at, format: :short)} UTC", import, class: "text-blue-600 underline" %>
+        · <%= import.status %> · <%= import.new_count %> new, <%= import.updated_count %> updated,
+        <%= import.skipped_count %> skipped, <%= pluralize(import.error_count, "row error") %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

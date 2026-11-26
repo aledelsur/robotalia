@@ -3,6 +3,8 @@ require "sidekiq/cron/web"
 
 Rails.application.routes.draw do
   resource :session, only: %i[new create destroy]
+  resources :accounts, only: %i[index show]
+  resources :account_imports, path: "imports", only: %i[new create show]
 
   # Sidekiq's dashboard is only routable for the signed-in owner; anyone else gets a 404.
   constraints OwnerSessionConstraint.new do
@@ -18,5 +20,5 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  root "home#show"
+  root "accounts#index"
 end
