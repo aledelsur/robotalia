@@ -2,54 +2,72 @@
 
 Tagline: "Robotalia – AI operations for trading robots"
 
-Goal: a production-quality Rails 8 + Claude app that proves modern Rails and applied-AI skills,
-built with Claude Code. Work one phase at a time; each phase ends with green tests and a commit.
+Milestone: a deployed, demo-ready version within 4 days.
+Goal: a polished Rails 8.1 app that showcases modern Rails and applied AI, built with Claude Code.
+First product: an AI-powered performance dashboard for a trading account.
 
-## Phase 1: Foundation and backtest screenshot reader (MVP)
-1. `rails new . --name=robotalia --database=postgresql --css=tailwind --skip-solid` (Ruby 3.4.13, Rails 8.1), keeping CLAUDE.md and docs/.
-2. Docker: `Dockerfile` (Rails 8 default) + `docker-compose.yml` with web, postgres, redis, sidekiq.
-   `bin/dev` and `docker compose up` must both work.
-3. Sidekiq + Redis configured as the Active Job adapter; Sidekiq web UI mounted behind admin auth.
-4. Authentication: Rails 8 built-in authentication generator (single owner account).
-5. Models and migrations: Strategy, StrategyVersion, Backtest, Trade, AiCall.
-6. Avo admin for all models, plus an "AI usage" dashboard (tokens and cost per feature from AiCall).
-7. `Ai::Client` + `config/ai.yml` + AiCall logging.
-8. Feature: **Backtest screenshot reader**
-   - Upload one or many TradingView Strategy Tester screenshots (Active Storage).
-   - `ExtractBacktestJob` sends each image to Claude (vision) and gets structured output:
-     net profit (% and amount), max drawdown, win rate, profit factor, total trades, date range.
-   - Results saved to Backtest; low-confidence fields flagged for review.
-   - Bulk mode uses the Message Batches API for large uploads.
-9. Strategy page: versions + backtests table, sortable; best version highlighted.
-10. Seeds with realistic sample data; RSpec for models, services and jobs.
+Already done (setup): Rails 8.1 app, PostgreSQL 16 + Redis via docker compose, Sidekiq,
+RSpec/WebMock/VCR, RuboCop/Brakeman, CI workflow, Dockerfiles. Single-owner sign-in is
+half-built in `git stash` ("WIP step 4").
 
-## Phase 2: Live trades and drawdown watchdog
-1. `POST /webhooks/trades`: authenticated JSON webhook (token per strategy) for trade open/close events.
-   Source: a second TradingView alert, or CSV import of MetaTrader 5 trade history.
-2. Trade journal UI with live updates (Turbo Streams).
-3. `DrawdownWatchdogJob` (sidekiq-cron, every 5 min): equity curve + drawdown per strategy.
-4. When a drawdown alert triggers: Telegram/email alert + `Ai::LosingStreakAnalyst` writes an analysis
-   of the recent losing trades.
-5. `Ai::VersionDiffExplainer`: compare two StrategyVersions (code + params) and explain the changes
-   and the likely effect on results.
+Each step ends with green tests and a commit. Prefer a smaller, polished, working scope over
+unfinished features. If a day's work runs late, cut scope, not quality.
 
-## Phase 3: AI agent
-1. "Ask Robotalia" chat: Claude with tool use, streamed to the page with Turbo Streams.
-   Tools are safe Ruby methods, e.g. `list_strategies`, `backtests_for(strategy, filters)`,
-   `trades_between(dates)`, `equity_curve(strategy)`, `compare_versions(a, b)`. Read-only.
-2. pgvector + embeddings (Voyage AI) over strategy notes and version explanations for semantic search.
-3. `WeeklyReportJob`: Claude writes a weekly performance report, emailed every Monday.
-4. Evals: `spec/evals/` with known screenshots and questions; checks extraction accuracy
-   and answer quality. Run with `bin/evals`.
+## Data source
+- Day 1-4: import trade history from a MetaTrader 5 account report (exported by the owner from
+  the MT5 terminal, History tab -> Report). Support the formats MT5 actually produces (check the
+  real file: HTML and/or XLSX). Imports are idempotent (dedupe by deal/position ticket).
+- A synthetic demo account (seeds) so the public demo never shows real data.
+- Live, read-only account sync behind an `AccountSync` adapter interface (MT5 report import is one
+  adapter). A sidekiq-cron job syncs every few minutes, upserting by ticket. Credentials and
+  sessions are stored with Active Record Encryption, never in code or logs. Verify the real API
+  responses before writing the parser.
+  Priority: after the dashboard works (Day 2-3), cut if time is short.
 
-## Phase 4: Ship it
-1. Kamal 2 deploy to a VPS (Hetzner or similar): web, sidekiq, postgres, redis accessories, SSL.
-2. GitHub Actions: RSpec, RuboCop, Brakeman on every PR; deploy on main.
-3. README: what it does, architecture diagram, AI features, how to run locally, screenshots, demo GIF.
-4. Stretch: MCP server exposing Robotalia tools to Claude Desktop / Claude Code.
+## Day 1: Foundation and import
+1. Finish single-owner authentication from the stash; Sidekiq web UI behind sign-in.
+2. Models: Account (broker, server, currency, initial balance), Deal and/or Trade (ticket,
+   symbol, side, volume, open/close time and price, SL/TP, commission, swap, profit, comment/magic
+   number), BalanceOperation (deposits/withdrawals), AccountImport, AiCall. Avo resources.
+3. MT5 report import: Active Storage upload + Sidekiq job, parsing, validation, idempotent upsert,
+   import summary (new, updated, skipped, errors) shown live with Turbo Streams.
+4. Idempotent seeds: a realistic synthetic demo account (several symbols and robots, ~6 months).
+
+## Day 2: Performance dashboard
+1. `Metrics` service objects (pure Ruby, fully tested): net profit, return %, win rate, profit
+   factor, expectancy, average win/loss, max drawdown (amount and %), longest losing streak,
+   equity and balance curves, monthly returns.
+2. Dashboard page: KPI cards, equity curve with drawdown, monthly returns heatmap,
+   breakdown by symbol and by robot (comment/magic number), trades table with server-side
+   sorting, filters and pagination (Turbo Frames).
+3. Date-range and symbol filters that update the whole page without a full reload.
+4. Fast queries: proper indexes, cached metric snapshots per account, measured with a seed of
+   ~10K trades.
+
+## Day 3: Claude features
+1. `Ai::PerformanceAnalyst`: receives computed metrics (never raw guesses) and returns structured
+   output: summary, strengths, risks, unusual patterns, suggestions. Runs in a Sidekiq job,
+   result streamed to the page. Clearly labelled as analysis, not financial advice.
+2. "Ask Robotalia" chat: Claude with read-only tools over the account (e.g. `metrics_for`,
+   `trades_between`, `breakdown_by_symbol`, `drawdown_periods`), streamed with Turbo Streams.
+3. AiCall logging and `/ai_usage` page (tokens, cost, latency, errors per feature).
+4. Evals in `spec/evals/` for the analyst on fixed metric sets.
+
+## Day 4: Ship
+1. Kamal 2 deploy to a VPS with SSL, Sidekiq and Redis; demo login with the synthetic account.
+2. GitHub repo (public): README with problem, screenshots/GIF, architecture diagram, how Claude is
+   used, how to run locally, test/CI badges. CI green on GitHub Actions.
+3. Final check: fresh `docker compose up --build`, seeds, sign in, import a sample report, dashboard,
+   AI summary, chat.
+
+## Later
+- Live account sync through an `AccountSync` adapter (MT5 investor access or broker API).
+- Settings optimizer for Pine Script strategies on exported TradingView data, with a broker
+  emulator matching TradingView's Strategy Tester and walk-forward validation.
+- Drawdown watchdog with alerts; weekly AI report email; MCP server.
 
 ## Architecture (target)
-Browser (Hotwire) -> Rails 8 (Puma) -> PostgreSQL (+pgvector)
-                                  -> Redis -> Sidekiq jobs -> Claude API (vision, tools, batches)
-TradingView / MT5 -> webhook / CSV import -> Rails
-Sidekiq-cron -> watchdog / weekly report -> Telegram / email
+MT5 report (manual export) -> Upload -> Rails 8.1 -> Sidekiq import job -> PostgreSQL
+Dashboard (Hotwire, Turbo Streams/Frames) <- Metrics services <- cached snapshots
+Ai::PerformanceAnalyst / chat tools (Claude, via Sidekiq) -> streamed results; AiCall logging
+Deploy: Kamal 2 -> VPS (web, sidekiq, postgres, redis)
