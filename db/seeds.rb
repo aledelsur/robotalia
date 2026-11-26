@@ -8,3 +8,7 @@ if User.owners.none?
     puts "Skipped the owner account: set OWNER_PASSWORD (12+ characters) and run db:seed again."
   end
 end
+
+# The synthetic account shown in the public demo.
+demo = Demo::AccountGenerator.new.call
+puts "Demo account ready: #{demo.trades.count} synthetic trades."
