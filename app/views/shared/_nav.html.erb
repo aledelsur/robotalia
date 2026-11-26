@@ -1,0 +1,9 @@
+<nav class="border-b border-gray-200 bg-white">
+  <div class="container mx-auto flex items-center gap-6 px-5 py-3 text-sm">
+    <%= link_to "Robotalia", root_path, class: "text-base font-bold" %>
+    <% if Current.user.owner? %>
+      <%= link_to "Jobs", "/sidekiq", class: "text-gray-600 hover:text-gray-900", data: { turbo: false } %>
+    <% end %>
+    <%= button_to "Sign out", session_path, method: :delete, form_class: "ml-auto", class: "cursor-pointer text-gray-600 hover:text-gray-900" %>
+  </div>
+</nav>
