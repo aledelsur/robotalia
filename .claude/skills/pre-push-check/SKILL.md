@@ -8,7 +8,7 @@ fix anything unless the user asks.
 
 ## 1. Local CI
 These mirror the jobs in `.github/workflows/ci.yml`. Run them all, even if one fails, so the report
-is complete. The specs need PostgreSQL and Redis (`docker compose up -d --wait db redis`).
+is complete. The specs need PostgreSQL and Redis (`docker compose up -d --wait postgres redis`).
 
 | Job | Command |
 |---|---|
