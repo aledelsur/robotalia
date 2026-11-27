@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+# PreToolUse hook for the read-only subagents (see .claude/agents/). It allows a single
+# command from a short list and nothing that chains, redirects, substitutes, writes a
+# file or starts another program. Exit 2 blocks the command.
+require "json"
+require "shellwords"
+
+module ReadonlyBash
+  GIT_COMMANDS = %w[blame cat-file diff grep log ls-files rev-list show status].freeze
+  # git accepts abbreviated long options, so these are matched by their first letters.
+  # They write a file (--output) or run a program (--ext-diff, --open-files-in-pager).
+  GIT_FORBIDDEN = /\A(--ou|--ext|--op|-[a-zA-Z]*O)/
+
+  def self.allowed?(command)
+    return false if command.match?(/["\\\n\r]/)
+
+    # Single quotes are literal in the shell, so only what is outside them can do harm.
+    outside_quotes = command.gsub(/'[^']*'/, "")
+    return false if outside_quotes.match?(/[';&|<>`$(){}]/)
+
+    program, subcommand, *rest = Shellwords.split(command)
+
+    case program
+    when "git" then GIT_COMMANDS.include?(subcommand) && rest.none? { _1.match?(GIT_FORBIDDEN) }
+    when "unzip" then %w[-l -p].include?(subcommand) && rest.none? { _1.start_with?("-") }
+    when "gitleaks" then %w[git dir].include?(subcommand) && rest.none? { _1.match?(/\A(-r|--report-path)/) }
+    else false
+    end
+  end
+end
+
+begin
+  command = JSON.parse($stdin.read).dig("tool_input", "command").to_s
+  allowed = ReadonlyBash.allowed?(command)
+rescue StandardError
+  allowed = false
+end
+
+unless allowed
+  warn "Blocked: this agent is read-only. It may run one command at a time, without pipes, " \
+       "redirects, double quotes or $(): git #{ReadonlyBash::GIT_COMMANDS.join('|')}, " \
+       "unzip -l|-p, or gitleaks git|dir. Use the Read, Grep and Glob tools for the rest."
+  exit 2
+end
