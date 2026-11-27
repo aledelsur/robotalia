@@ -35,6 +35,33 @@ RSpec.describe "Dashboard" do
       .to eq(account_trades_path(account, from: "2026-02-01", symbol: "EURUSD"))
   end
 
+  def tile_labels
+    response.parsed_body.css("[aria-label='Performance summary'] dt").map(&:text)
+  end
+
+  def tile_value(label)
+    response.parsed_body.css("[aria-label='Performance summary'] dt").find { _1.text == label }.next_element.text
+  end
+
+  it "shows the biggest trade below the return on the four-column grid" do
+    get account_path(account)
+
+    expect(tile_value("Biggest trade")).to eq("USD 100.00")
+    expect(tile_labels.index("Biggest trade")).to eq(tile_labels.index("Return") + 4)
+  end
+
+  it "takes the biggest trade from the filtered trades only" do
+    get account_path(account, from: "2026-02-01")
+
+    expect(tile_value("Biggest trade")).to eq("USD 15.00")
+  end
+
+  it "has no biggest trade without a winning one" do
+    get account_path(account, from: "2026-02-01", symbol: "EURUSD")
+
+    expect(tile_value("Biggest trade")).to eq("–")
+  end
+
   def net_profit_classes
     response.parsed_body.at_css("[data-testid=net-profit]").classes
   end
