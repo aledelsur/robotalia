@@ -18,7 +18,7 @@
 <section aria-label="Performance summary" class="space-y-4">
   <div class="rounded-lg border border-gray-200 bg-white p-5">
     <p class="text-sm text-gray-600">Net profit of closed trades, after commission and swap</p>
-    <p class="mt-1 text-5xl font-semibold <%= profit_class(summary.net_profit) %>" data-testid="net-profit"><%= money(summary.net_profit, currency) %></p>
+    <p class="mt-1 text-5xl font-semibold <%= net_profit_class(summary.net_profit) %>" data-testid="net-profit"><%= money(summary.net_profit, currency) %></p>
     <p class="mt-2 text-sm text-gray-600">
       <%= pluralize(number_with_delimiter(summary.trades), "trade") %>:
       <%= summary.wins %> won, <%= summary.losses %> lost, <%= summary.break_even %> break-even

@@ -62,6 +62,31 @@ RSpec.describe "Dashboard" do
     expect(tile_value("Biggest trade")).to eq("–")
   end
 
+  def net_profit_classes
+    response.parsed_body.at_css("[data-testid=net-profit]").classes
+  end
+
+  it "colours a net profit green" do
+    get account_path(account)
+
+    expect(net_profit_classes).to include("text-green-700")
+  end
+
+  it "colours a filtered net loss red" do
+    get account_path(account, from: "2026-02-01", symbol: "EURUSD")
+
+    expect(net_profit_classes).to include("text-red-700")
+  end
+
+  it "colours a net profit of zero grey" do
+    closed(account, "2026-03-01 12:00", 0)
+
+    get account_path(account, from: "2026-03-01")
+
+    expect(net_profit).to eq("USD 0.00")
+    expect(net_profit_classes).to include("text-gray-500")
+  end
+
   it "says so when nothing matches" do
     get account_path(account, symbol: "XAUUSD")
 
