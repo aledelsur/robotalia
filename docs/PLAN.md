@@ -75,6 +75,17 @@ Notes from Day 2:
   amount. Max drawdown in money and in percent are each the largest, so they can be different dips.
 - Charts show one point per day (the day's close and its deepest drawdown).
 
+## Before Day 3: tooling and GitHub
+So that all later work goes through pull requests:
+1. Claude Code setup in `.claude/`: the `/pre-push-check` and `/add-metric` skills, the read-only
+   `rails-reviewer` and `privacy-guard` subagents, and hooks (RuboCop after edits, a privacy check
+   before commits).
+2. Privacy audit of the whole repo and its history, with `privacy-guard` and gitleaks, before
+   anything is public.
+3. Public GitHub repo, `main` protected with required CI checks, and Claude GitHub Actions for PR
+   review and `@claude` mentions.
+4. Trello through MCP: cards move to Review when their PR opens and to Done when it is merged.
+
 ## Day 3: Claude features
 1. AiCall model and logging, the daily Claude-call cap, and the `/ai_usage` page (tokens, cost,
    latency, errors per feature).
@@ -89,15 +100,16 @@ Notes from Day 2:
 
 ## Day 4: Ship
 1. Redeploy to the VPS.
-2. GitHub repo (public): README with problem, screenshots/GIF, architecture diagram, how Claude is
-   used, how to run locally, test/CI badges. CI green on GitHub Actions.
+2. README with problem, screenshots/GIF, architecture diagram, how Claude is used, how to run
+   locally, test/CI badges.
 3. Final check: fresh `docker compose up --build`, seeds, sign in, import a sample report, dashboard,
    AI summary, chat. The local check uses the synthetic sample report.
 4. Optional, if time is left: Avo resources (free tier).
 
 ## Integrations
-Not started and not yet assigned to a day. The privacy rules in CLAUDE.md apply to all of them:
-tokens and other secrets stay out of the repo, and no real account data goes to an outside service.
+Items 1, 4 and Trello are part of "Before Day 3". The rest are not started and not yet assigned to
+a day. The privacy rules in CLAUDE.md apply to all of them: tokens and other secrets stay out of
+the repo, and no real account data goes to an outside service.
 
 1. GitHub PR workflow and Claude GitHub Actions: changes go through pull requests with CI, and
    Claude works on them through GitHub Actions.

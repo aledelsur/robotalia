@@ -50,6 +50,25 @@ only enters through files the owner exports manually. Not part of the first mile
 - RuboCop (rubocop-rails-omakase) must pass.
 - Commit in small steps with clear messages.
 
+## Workflow
+- Once the repo is on GitHub, every change goes through a pull request: branch from `main`, push,
+  open the PR and merge it when the CI checks are green. Never push to `main`.
+- Run `/pre-push-check` before every push and pull request.
+- Trello: the board is named "Robotalia" (find it by name with the Trello MCP tools; its link stays
+  out of this repo). When a step's pull request is opened, move its card to the Review list. When
+  the pull request is merged, move the card to Done. A commit alone does not move a card. If no card
+  matches a step, say so; create one only when asked. Never copy real account figures into a card.
+
+## Claude Code setup
+Shared configuration lives in `.claude/` (`settings.local.json` is personal and ignored).
+- Hooks: RuboCop reports on every Ruby file Claude edits. Before a commit,
+  `script/check_staged_privacy` blocks private files and secrets. `script/install_git_hooks` runs
+  the same check on commits made outside Claude. If it blocks a commit, remove the private data;
+  never bypass the check.
+- Subagents (read-only): `rails-reviewer` reviews a diff against these rules, `privacy-guard`
+  audits a diff or the whole history.
+- Skills: `/pre-push-check` and `/add-metric <name> <definition>`.
+
 ## Domain language
 - Account: one trading account (broker, server, currency, initial balance). The demo account is synthetic.
 - AccountImport: one uploaded MT5 report, with stats (new, updated, skipped, errors).
