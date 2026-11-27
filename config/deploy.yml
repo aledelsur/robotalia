@@ -1,7 +1,7 @@
 # Deployed with Kamal 2: web, Sidekiq, PostgreSQL and Redis on a single server.
 #
-# This repo is public, so the server address and hostname come from the environment.
-# bin/kamal loads them from .env.deploy (see .env.deploy.example).
+# This repo is public, so the server address stays out of it. It comes from the environment,
+# like the hostname: bin/kamal loads both from .env.deploy (see .env.deploy.example).
 service: robotalia
 image: robotalia
 
