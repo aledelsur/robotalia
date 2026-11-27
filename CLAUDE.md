@@ -67,6 +67,12 @@ Shared configuration lives in `.claude/` (`settings.local.json` is personal and 
   never bypass the check.
 - Subagents (read-only): `rails-reviewer` reviews a diff against these rules, `privacy-guard`
   audits a diff or the whole history.
+- Subagent (writes code): `frontend-builder` implements a Trello card's frontend work. It never
+  commits or changes cards.
+- Frontend: `.claude/frontend-guidelines.md` holds the rules for views, helpers, Tailwind, Hotwire
+  and their specs. Read it before frontend work. When a conversation or a `frontend-builder` report
+  settles on a practice worth keeping, propose the exact line and add it only after the owner
+  approves. Change an existing rule rather than adding a near-duplicate.
 - Review: `.claude/review-checklist.md` is the one checklist for `rails-reviewer` and for the CI
   review of each pull request. Change review rules there. CI reads it from `main`.
 - Skills: `/pre-push-check` and `/add-metric <name> <definition>`.

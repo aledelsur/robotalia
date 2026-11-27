@@ -27,6 +27,7 @@ differ, `CLAUDE.md` wins.
   safe to run again after a failure.
 - Pages update with Hotwire (Turbo Frames and Streams, Stimulus). Turbo Stream broadcasts reach
   only people allowed to see the record.
+- Frontend changes follow `.claude/frontend-guidelines.md`.
 - Migrations are reversible, keep `db/schema.rb` in step, and use database constraints (`null`,
   foreign keys, unique indexes) as well as model validations.
 
