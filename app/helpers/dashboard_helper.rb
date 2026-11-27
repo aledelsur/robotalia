@@ -25,6 +25,13 @@ module DashboardHelper
     amount.positive? ? "text-[#1b64be]" : "text-[#b82f30]"
   end
 
+  # The headline figure only: tables and breakdowns keep the blue/red of profit_class.
+  def net_profit_class(amount)
+    return "text-gray-500" if amount.nil? || amount.zero?
+
+    amount.positive? ? "text-green-700" : "text-red-700"
+  end
+
   def heat_class(rate)
     return "bg-gray-100 text-gray-900" if rate.nil? || rate.zero?
 
