@@ -1,0 +1,124 @@
+#!/usr/bin/env ruby
+# Stops private data from being committed to this public repo. Used by the Claude Code
+# commit guard (.claude/hooks/guard_commit.sh) and as a git pre-commit hook.
+#
+#   script/check_staged_privacy              staged files
+#   script/check_staged_privacy --all        also unstaged changes to tracked files (git commit -a)
+#   script/check_staged_privacy --untracked  also untracked files (git add ... && git commit)
+#
+# Exits 0 when clean and 2, with the reasons on stderr, when something must not be committed.
+require "open3"
+
+class StagedPrivacyCheck
+  ENV_EXAMPLES = %w[.env.example .env.deploy.example].freeze
+  EXPORT_FOLDERS = %w[spec/fixtures/ public/].freeze
+
+  SECRET_PATTERNS = {
+    "an Anthropic API key" => /sk-ant-[A-Za-z0-9_-]{10,}/,
+    "a private key" => /-----BEGIN [A-Z ]*PRIVATE KEY-----/
+  }.freeze
+
+  # Real values that live only in ignored files and must not turn up anywhere else.
+  LOCAL_SECRETS = {
+    ".env.deploy" => %w[ROBOTALIA_SERVER_IP ROBOTALIA_DATABASE_PASSWORD],
+    ".env" => %w[ANTHROPIC_API_KEY OWNER_PASSWORD]
+  }.freeze
+  SHORTEST_SECRET = 8
+
+  def initialize(all: false, untracked: false)
+    @all = all
+    @untracked = untracked
+  end
+
+  def call
+    changes.flat_map { |path, source| problems(path, source) }.uniq
+  end
+
+  private
+    # [path, :index or :worktree] for everything the commit could include. Deletions are fine.
+    def changes
+      list = names("diff", "--cached", "--name-only", "--diff-filter=ACMRT").map { [ _1, :index ] }
+      list += names("diff", "--name-only", "--diff-filter=ACMRT").map { [ _1, :worktree ] } if @all || @untracked
+      list += names("ls-files", "--others", "--exclude-standard").map { [ _1, :worktree ] } if @untracked
+      list
+    end
+
+    def problems(path, source)
+      reason = forbidden_path(path)
+      return [ "#{path}: #{reason}" ] if reason
+
+      content = content_of(path, source)
+      found = SECRET_PATTERNS.filter_map { |name, pattern| name if content.match?(pattern) }
+      found += local_secrets.filter_map { |name, value| "the value of #{name}" if content.include?(value) }
+      found.map { "#{path}: contains #{_1}" }
+    end
+
+    def forbidden_path(path)
+      name = File.basename(path)
+
+      if path.start_with?("private/")
+        "private/ holds real account reports"
+      elsif name.start_with?(".env") && !ENV_EXAMPLES.include?(path)
+        "environment files hold secrets"
+      elsif path.match?(%r{\Aconfig/(credentials/)?[^/]+\.key\z}) || name.end_with?(".pem")
+        "key files are secrets"
+      elsif name.downcase.end_with?(".pine")
+        "Pine Script strategy code is private"
+      elsif name.downcase.end_with?(".xlsx", ".xls", ".csv", ".html", ".htm") && !path.start_with?(*EXPORT_FOLDERS)
+        "reports and data exports are only allowed as synthetic fixtures in spec/fixtures/"
+      end
+    end
+
+    def content_of(path, source)
+      return git("show", ":#{path}") if source == :index
+
+      file = File.join(root, path)
+      File.file?(file) ? File.binread(file) : "".b
+    end
+
+    def local_secrets
+      @local_secrets ||= LOCAL_SECRETS.flat_map do |file, keys|
+        values_in(File.join(root, file)).slice(*keys).select { |_, value| value.bytesize >= SHORTEST_SECRET }.to_a
+      end.map { |name, value| [ name, value.b ] }
+    end
+
+    def values_in(file)
+      return {} unless File.file?(file)
+
+      File.readlines(file).filter_map do |line|
+        key, value = line.strip.delete_prefix("export ").split("=", 2)
+        [ key, value.delete_prefix('"').delete_suffix('"').delete_prefix("'").delete_suffix("'") ] if value
+      end.to_h
+    end
+
+    def root
+      @root ||= git("rev-parse", "--show-toplevel").chomp.force_encoding(Encoding::UTF_8)
+    end
+
+    def names(*command)
+      command += [ "--full-name" ] if command.first == "ls-files"
+      git(*command, "-z", dir: root).split("\0").map { _1.force_encoding(Encoding::UTF_8) }
+    end
+
+    def git(*command, dir: nil)
+      options = { binmode: true }
+      options[:chdir] = dir if dir
+      output, error, status = Open3.capture3("git", *command, **options)
+      raise "git #{command.join(' ')} failed: #{error}" unless status.success?
+
+      output
+    end
+end
+
+begin
+  problems = StagedPrivacyCheck.new(all: ARGV.include?("--all"), untracked: ARGV.include?("--untracked")).call
+rescue StandardError => error
+  # A check that cannot run must not let the commit through.
+  warn "Privacy check could not run: #{error.message}"
+  exit 2
+end
+
+unless problems.empty?
+  warn "Commit blocked: this repo is public and these must not be committed.\n  #{problems.join("\n  ")}"
+  exit 2
+end

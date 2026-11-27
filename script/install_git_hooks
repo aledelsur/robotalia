@@ -1,0 +1,14 @@
+#!/bin/sh
+# Runs the privacy check on every commit, including those made outside Claude Code.
+set -e
+
+root=$(git rev-parse --show-toplevel)
+hook="$(git rev-parse --git-path hooks)/pre-commit"
+
+if [ -e "$hook" ] && [ ! -L "$hook" ]; then
+  echo "A pre-commit hook already exists at $hook. Not replacing it." >&2
+  exit 1
+fi
+
+ln -sf "$root/script/check_staged_privacy" "$hook"
+echo "Installed the privacy check as $hook"
