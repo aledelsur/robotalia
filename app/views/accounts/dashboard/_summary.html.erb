@@ -9,6 +9,7 @@
      [ "Win rate", percent(summary.win_rate), mt5_note ],
      [ "Profit factor", ratio(summary.profit_factor), summary.profit_factor ? "Gross profit ÷ gross loss" : "No losing trades in this range" ],
      [ "Expectancy", money(summary.expectancy, currency), "Average net profit per trade" ],
+     [ "Biggest trade", money(summary.largest_win, currency), summary.largest_win ? "Highest net profit of a single trade" : "No winning trades in this range" ],
      [ "Max drawdown", percent(curve.max_drawdown_rate, precision: 2), "Largest fall from a peak. In money: #{money(curve.max_drawdown, currency)}" ],
      [ "Longest losing streak", pluralize(summary.longest_losing_streak, "trade"), "Consecutive losses in closing order" ],
      [ "Average win", money(summary.average_win, currency), "Largest: #{money(summary.largest_win, currency)}" ],
