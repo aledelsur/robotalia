@@ -55,9 +55,11 @@ only enters through files the owner exports manually. Not part of the first mile
   open the PR and merge it when the CI checks are green. Never push to `main`.
 - Run `/pre-push-check` before every push and pull request.
 - Trello: the board is named "Robotalia" (find it by name with the Trello MCP tools; its link stays
-  out of this repo). When a step's pull request is opened, move its card to the Review list. When
-  the pull request is merged, move the card to Done. A commit alone does not move a card. If no card
-  matches a step, say so; create one only when asked. Never copy real account figures into a card.
+  out of this repo). Before starting a step, run `/create-ticket`: it finds the step's card or
+  creates it if there is none, and moves it to In progress. Every card has a Description and
+  Acceptance criteria and is assigned to the board owner (the signed-in Trello user). When a step's pull request is opened, move its
+  card to the Review list. When the pull request is merged, move the card to Done. A commit alone
+  does not move a card. Never copy real account figures into a card.
 
 ## Claude Code setup
 Shared configuration lives in `.claude/` (`settings.local.json` is personal and ignored).
@@ -75,7 +77,7 @@ Shared configuration lives in `.claude/` (`settings.local.json` is personal and 
   approves. Change an existing rule rather than adding a near-duplicate.
 - Review: `.claude/review-checklist.md` is the one checklist for `rails-reviewer` and for the CI
   review of each pull request. Change review rules there. CI reads it from `main`.
-- Skills: `/pre-push-check` and `/add-metric <name> <definition>`.
+- Skills: `/create-ticket <work>`, `/pre-push-check` and `/add-metric <name> <definition>`.
 
 ## Domain language
 - Account: one trading account (broker, server, currency, initial balance). The demo account is synthetic.
