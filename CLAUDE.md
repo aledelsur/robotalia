@@ -67,6 +67,8 @@ Shared configuration lives in `.claude/` (`settings.local.json` is personal and 
   never bypass the check.
 - Subagents (read-only): `rails-reviewer` reviews a diff against these rules, `privacy-guard`
   audits a diff or the whole history.
+- Review: `.claude/review-checklist.md` is the one checklist for `rails-reviewer` and for the CI
+  review of each pull request. Change review rules there. CI reads it from `main`.
 - Skills: `/pre-push-check` and `/add-metric <name> <definition>`.
 
 ## Domain language
