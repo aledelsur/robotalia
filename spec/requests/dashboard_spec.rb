@@ -35,6 +35,58 @@ RSpec.describe "Dashboard" do
       .to eq(account_trades_path(account, from: "2026-02-01", symbol: "EURUSD"))
   end
 
+  def tile_labels
+    response.parsed_body.css("[aria-label='Performance summary'] dt").map(&:text)
+  end
+
+  def tile_value(label)
+    response.parsed_body.css("[aria-label='Performance summary'] dt").find { _1.text == label }.next_element.text
+  end
+
+  it "shows the biggest trade below the return on the four-column grid" do
+    get account_path(account)
+
+    expect(tile_value("Biggest trade")).to eq("USD 100.00")
+    expect(tile_labels.index("Biggest trade")).to eq(tile_labels.index("Return") + 4)
+  end
+
+  it "takes the biggest trade from the filtered trades only" do
+    get account_path(account, from: "2026-02-01")
+
+    expect(tile_value("Biggest trade")).to eq("USD 15.00")
+  end
+
+  it "has no biggest trade without a winning one" do
+    get account_path(account, from: "2026-02-01", symbol: "EURUSD")
+
+    expect(tile_value("Biggest trade")).to eq("–")
+  end
+
+  def net_profit_classes
+    response.parsed_body.at_css("[data-testid=net-profit]").classes
+  end
+
+  it "colours a net profit green" do
+    get account_path(account)
+
+    expect(net_profit_classes).to include("text-green-700")
+  end
+
+  it "colours a filtered net loss red" do
+    get account_path(account, from: "2026-02-01", symbol: "EURUSD")
+
+    expect(net_profit_classes).to include("text-red-700")
+  end
+
+  it "colours a net profit of zero grey" do
+    closed(account, "2026-03-01 12:00", 0)
+
+    get account_path(account, from: "2026-03-01")
+
+    expect(net_profit).to eq("USD 0.00")
+    expect(net_profit_classes).to include("text-gray-500")
+  end
+
   it "says so when nothing matches" do
     get account_path(account, symbol: "XAUUSD")
 
