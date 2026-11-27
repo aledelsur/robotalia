@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: existing-card-moves-to-in-progress
+expected_outcome: |
+  Finds the existing Sentry error monitoring card, creates nothing, adds the missing sections and moves it to In progress.
